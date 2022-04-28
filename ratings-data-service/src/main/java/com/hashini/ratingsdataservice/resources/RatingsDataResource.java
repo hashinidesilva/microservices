@@ -23,7 +23,7 @@ public class RatingsDataResource {
     public UserRating getUserRatings(@PathVariable String userId) {
         List<Rating> ratings = Arrays.asList(
                 new Rating("100", 2),
-                new Rating("200", 2)
+                new Rating("200", 3)
         );
         return new UserRating(ratings);
     }

@@ -1,8 +1,9 @@
 package com.hashini.moviecatalogservice.resources;
 
 import com.hashini.moviecatalogservice.models.CatalogItem;
-import com.hashini.moviecatalogservice.models.Movie;
 import com.hashini.moviecatalogservice.models.UserRating;
+import com.hashini.moviecatalogservice.services.MovieInfo;
+import com.hashini.moviecatalogservice.services.UserRatingInfo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -20,26 +21,27 @@ public class MovieCatalogResource {
 
     private final RestTemplate restTemplate;
     private final WebClient.Builder webClientBuilder;
+    private final MovieInfo movieInfo;
+    private final UserRatingInfo userRatingInfo;
 
     @Autowired
     public MovieCatalogResource(RestTemplate restTemplate,
-                                WebClient.Builder webClientBuilder) {
+                                WebClient.Builder webClientBuilder,
+                                MovieInfo movieInfo,
+                                UserRatingInfo userRatingInfo) {
         this.restTemplate = restTemplate;
         this.webClientBuilder = webClientBuilder;
+        this.movieInfo = movieInfo;
+        this.userRatingInfo = userRatingInfo;
     }
 
     @GetMapping("/{userId}")
     public List<CatalogItem> getCatalog(@PathVariable String userId) {
 
-        UserRating ratings = restTemplate.getForObject("http://ratings-data-service/ratingsdata/users/" + userId,
-                UserRating.class);
+        UserRating ratings = userRatingInfo.getUserRating(userId);
 
-        return ratings.getUserRating().stream().map(rating -> {
-                    Movie movie = restTemplate.getForObject("http://movie-info-service/movies/" + rating.getMovieId(),
-                            Movie.class);
-
-                    return new CatalogItem(movie.getName(), movie.getDescription(), rating.getRating());
-                })
+        return ratings.getUserRating().stream()
+                .map(movieInfo::getCatalogItem)
                 .collect(Collectors.toList());
     }
 }
